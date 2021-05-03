@@ -1,35 +1,48 @@
 import gym 
-import sys
 import numpy as np
-from DQN import Agent
-import tensorflow as tf
+from DDQN import Agent
+
 
 # Deconstruct Environment
-env= gym.make('MountainCar-v0')
+env= gym.make('CartPole-v1')
 init_state = env.reset()
 
 # Initiate the Agent and load the weights
-agent = Agent(env)
-print(agent.choose_action(init_state))
-agent.train_network = tf.keras.models.load_model('Expert/Training/data/expert_weights.h5')
-print (f'Model Loaded with Trained Weights!')
-
-# test the Expert
-dataframe = []
-for i in range(int(1e2)):
+agent = Agent(lr=0.0005, gamma=0.99, n_actions= env.action_space.n, epsilon=1.0, batch_size=64, input_dims= env.observation_space.shape)
+for i in range(10):
     score = 0
     done = False
-    # Initial Reset of Environment
     observation = env.reset()
     while not done:
-        env.render()
-        action = np.argmax(agent.train_network.predict(np.matrix([observation]))[0])
-        observation_, reward, done, info = env.step(action) 
+        action = agent.choose_action(observation)
+        observation_, reward, done, info = env.step(action)
+        agent.store_transition(observation, action, reward, observation_, done)
+        agent.learn()
         observation = observation_
-        score += reward 
-    print(f'Tested Expert on Episode: {i} with ACC. Score: {score}')
-    dataframe.append(score)
-env.close()
 
-# Save the dataset
-np.savez('Expert/Data Psiphoning/data/expert_testscore', dataframe, allow_pickle=False)
+# Load the trained Weights
+try:
+    agent.load_model()
+    print ('Loaded models!')
+except:
+    print ('Could not load models!')
+       
+# Test the Trained Agent
+score_log = []
+for i in range(100):
+    score = 0
+    done = False
+    observation = env.reset()
+    while not done:
+        action = agent.expert_action(observation)
+        observation_, reward, done, info = env.step(action)
+        observation = observation_
+        score += reward
+    print(f'Expert Tryouts:{i} \t ACC. Rewards: {score}')
+    score_log.append(score)
+    
+# Save the log
+np.save('Expert/Training/data/expert_scores', score_log, allow_pickle=False)
+                
+
+        
