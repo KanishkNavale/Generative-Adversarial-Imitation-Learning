@@ -103,13 +103,21 @@ class Agent():
             action = tf.math.argmax(actions, axis=1).numpy()[0]
         return action
     
+    def expert_action(self, observation):
+        state = np.array([observation])
+        actions = self.q_eval.advantage(state)
+        action = tf.math.argmax(actions, axis=1).numpy()[0]
+        return action
+    
     def save_model(self):
-        self.q_eval.save_weights('data/q_eval.h5')
-        self.q_next.save_weights('data/q_next.h5')
+        self.q_eval.save_weights('Expert/Training/data/q_eval.h5')
+        self.q_next.save_weights('Expert/Training/data/q_next.h5')
+        self.q_eval.save_weights('Expert/Training/data/backups/q_eval.h5')
+        self.q_next.save_weights('Expert/Training/data/backups/q_next.h5')
         
     def load_model(self):
-        self.q_eval.load_weights('data/q_eval.h5')
-        self.q_next.load_weights('data/q_next.h5')
+        self.q_eval.load_weights('Expert/Training/data/q_eval.h5')
+        self.q_next.load_weights('Expert/Training/data/q_next.h5')
 
     def learn(self):
         if self.memory.mem_cntr < self.batch_size:

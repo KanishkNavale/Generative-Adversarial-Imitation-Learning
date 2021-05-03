@@ -12,7 +12,7 @@ print (f'Max. Episode Steps: {env._max_episode_steps}')
 
 # Initiate Training
 agent = Agent(lr=0.0005, gamma=0.99, n_actions= env.action_space.n, epsilon=1.0, batch_size=64, input_dims= env.observation_space.shape)
-n_games = 1000
+n_games = 2000
 score_history = []
 avg_history = []
 best_score = env.reward_range[0]
@@ -43,9 +43,10 @@ for i in range(n_games):
     if avg_score > best_score:
         best_score = avg_score
         agent.save_model()
-
-    print(f'Episode:{i} \t ACC. Rewards: {score} \t AVG. Rewards: {avg_score}')
-
+        print(f'Episode:{i} \t ACC. Rewards: {score} \t AVG. Rewards: {avg_score:3.2f} \t *** MODEL SAVED! ***')
+    else:
+        print(f'Episode:{i} \t ACC. Rewards: {score} \t AVG. Rewards: {avg_score:3.2f}')
+        
     # Save the Training data
-    np.save('data/score_history', score_history, allow_pickle=False)
-    np.save('data/avg_history', avg_history, allow_pickle=False)
+    np.save('Expert/Training/data/score_history', score_history, allow_pickle=False)
+    np.save('Expert/Training/data/avg_history', avg_history, allow_pickle=False)
