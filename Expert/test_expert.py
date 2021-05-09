@@ -2,7 +2,6 @@ import gym
 import numpy as np
 from DDQN import Agent
 
-
 # Deconstruct Environment
 env= gym.make('CartPole-v1')
 init_state = env.reset()
@@ -21,12 +20,8 @@ for i in range(10):
         observation = observation_
 
 # Load the trained Weights
-try:
-    agent.load_model()
-    print ('Loaded models!')
-except:
-    print ('Could not load models!')
-       
+agent.load_model()
+      
 # Test the Trained Agent
 score_log = []
 for i in range(100):
@@ -42,7 +37,7 @@ for i in range(100):
     score_log.append(score)
     
 # Save the log
-np.save('Expert/Training/data/expert_scores', score_log, allow_pickle=False)
+np.save('data/expert_scores', score_log, allow_pickle=False)
                 
 
         

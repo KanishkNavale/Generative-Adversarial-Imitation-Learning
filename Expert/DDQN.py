@@ -110,14 +110,18 @@ class Agent():
         return action
     
     def save_model(self):
-        self.q_eval.save_weights('Expert/Training/data/q_eval.h5')
-        self.q_next.save_weights('Expert/Training/data/q_next.h5')
-        self.q_eval.save_weights('Expert/Training/data/backups/q_eval.h5')
-        self.q_next.save_weights('Expert/Training/data/backups/q_next.h5')
+        self.q_eval.save_weights('data/q_eval.h5')
+        self.q_next.save_weights('data/q_next.h5')
+        self.q_eval.save_weights('data/backups/q_eval.h5')
+        self.q_next.save_weights('data/backups/q_next.h5')
         
     def load_model(self):
-        self.q_eval.load_weights('Expert/Training/data/q_eval.h5')
-        self.q_next.load_weights('Expert/Training/data/q_next.h5')
+        try:
+            self.q_eval.load_weights('data/q_eval.h5')
+            self.q_next.load_weights('data/q_next.h5')
+            print ('Loaded Models!')
+        except:
+            print ('Could not load Models!')
 
     def learn(self):
         if self.memory.mem_cntr < self.batch_size:
