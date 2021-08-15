@@ -10,12 +10,12 @@ abs_path = os.getcwd()
 env = gym.make('CartPole-v1')
 
 # Load the Expert Dataset and Agent
-expert_obs = np.load(abs_path+'/Expert/data/expert_DatasetStates.npy')
-expert_actions = np.load(abs_path+'/Expert/data/expert_DatasetAction.npy')
+expert_obs = np.load(abs_path+'/Expert/data/expert_DatasetStates.npy', allow_pickle=False)
+expert_actions = np.load(abs_path+'/Expert/data/expert_DatasetAction.npy', allow_pickle=False)
 agent = Agent(expert_obs, expert_actions, env, batch_size=64)
 agent.memorize_expert()
 
-n_games = 1000
+n_games = 2500
 score_history = []
 avg_history = []
 best_score = env.reward_range[0]
@@ -36,7 +36,7 @@ for i in range(n_games):
         score += reward
     
     # Optimize the Agent    
-    agent.optimize(64)
+    agent.optimize(16)
         
     score_history.append(score)
     avg_score = np.mean(score_history[-100:])

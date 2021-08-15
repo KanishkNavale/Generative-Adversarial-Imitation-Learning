@@ -36,7 +36,7 @@ class Discriminator(keras.Model):
         self.l2 = Dense(64, activation='relu')
         self.l3 = Dense(16, activation='relu')
         self.l4 = Dense(1, activation='sigmoid')
-        self.drop = Dropout(0.25)
+        self.drop = Dropout(0.1)
     
     @tf.function  
     def call(self, state, action):
@@ -44,6 +44,7 @@ class Discriminator(keras.Model):
         x = self.l1(x)
         x = self.l2(x)
         x = self.l3(x)
+        x = self.drop(x)
         x = self.l4(x)
         return x
 
@@ -111,8 +112,9 @@ class Agent:
         return actions
     
     def memorize_expert(self):
-        self.expert_memory.memorize_expert(self.exp_obs, self.exp_actions)
         print (f'Memorizing Expert Data')
+        self.expert_memory.memorize_expert(self.exp_obs, self.exp_actions)
+        print('Done!')
     
     def optimize(self, steps):
         

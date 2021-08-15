@@ -43,6 +43,6 @@ for i in range(int(2500)):
         score += reward
     print(f'Logging Data from Episode:{i} with ACC. Rewards: {score}')
 
-    # Save the dataframe    
-    np.save(abs_path+'/data/expert_DatasetStates', dataframe_states, allow_pickle=False)
-    np.save(abs_path+'/data/expert_DatasetAction', dataframe_actions, allow_pickle=False)
+# Save the dataframe    
+np.save(abs_path+'/Expert/data/expert_DatasetStates', dataframe_states, allow_pickle=False)
+np.save(abs_path+'/Expert/data/expert_DatasetAction', dataframe_actions, allow_pickle=False)

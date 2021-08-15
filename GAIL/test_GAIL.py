@@ -26,7 +26,7 @@ for i in range(10):
 
 # Load the trained Weights
 agent.actor.load_weights(os.getcwd()+'/GAIL/data/actor.h5')
-      
+
 # Test the Trained Agent
 score_log = []
 for i in range(100):
@@ -36,7 +36,6 @@ for i in range(100):
     while not done:
         action = agent.choose_action(observation)
         observation_, reward, done, info = env.step(np.argmax(action))
-        agent.replay_memory.store_transition(observation, action)
         observation = observation_
         score += score
     print(f'GAIL Tryouts:{i} \t ACC. Rewards: {score}')
