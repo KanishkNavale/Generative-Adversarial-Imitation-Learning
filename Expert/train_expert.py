@@ -2,6 +2,9 @@
 import gym 
 import numpy as np
 from DDQN import Agent
+import os
+
+abs_path = os.getcwd()
 
 # Deconstruct Environment
 env = gym.make('CartPole-v1')
@@ -48,5 +51,5 @@ for i in range(n_games):
         print(f'Episode:{i} \t ACC. Rewards: {score} \t AVG. Rewards: {avg_score:3.2f}')
         
     # Save the Training data
-    np.save('Expert/Training/data/score_history', score_history, allow_pickle=False)
-    np.save('Expert/Training/data/avg_history', avg_history, allow_pickle=False)
+    np.save(abs_path+'/Expert/Training/data/score_history', score_history, allow_pickle=False)
+    np.save(abs_path+'/Expert/Training/data/avg_history', avg_history, allow_pickle=False)

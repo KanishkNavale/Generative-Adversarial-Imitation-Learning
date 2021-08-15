@@ -1,6 +1,9 @@
 import gym 
 import numpy as np
 from DDQN import Agent
+import os
+
+abs_path = os.getcwd()
 
 # Deconstruct Environment
 env= gym.make('CartPole-v1')
@@ -32,6 +35,7 @@ for i in range(int(2500)):
     while not done:
         action = agent.expert_action(observation)
         observation_, reward, done, info = env.step(action)
+        
         # Build dataframe
         dataframe_states.append(observation)
         dataframe_actions.append(action)
@@ -40,5 +44,5 @@ for i in range(int(2500)):
     print(f'Logging Data from Episode:{i} with ACC. Rewards: {score}')
 
     # Save the dataframe    
-    np.save('data/expert_DatasetStates', dataframe_states, allow_pickle=False)
-    np.save('data/expert_DatasetAction', dataframe_actions, allow_pickle=False)
+    np.save(abs_path+'/data/expert_DatasetStates', dataframe_states, allow_pickle=False)
+    np.save(abs_path+'/data/expert_DatasetAction', dataframe_actions, allow_pickle=False)

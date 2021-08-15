@@ -1,8 +1,12 @@
+# Library Imports
+import os
 import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 import numpy as np
+
+abs_path = os.getcwd()
 
 class DuelingDeepQNetwork(keras.Model):
     def __init__(self, n_actions):
@@ -110,15 +114,15 @@ class Agent():
         return action
     
     def save_model(self):
-        self.q_eval.save_weights('data/q_eval.h5')
-        self.q_next.save_weights('data/q_next.h5')
-        self.q_eval.save_weights('data/backups/q_eval.h5')
-        self.q_next.save_weights('data/backups/q_next.h5')
+        self.q_eval.save_weights(abs_path+'/Expert/data/q_eval.h5')
+        self.q_next.save_weights(abs_path+'/Expert/data/q_next.h5')
+        self.q_eval.save_weights(abs_path+'/Expert/data/backups/q_eval.h5')
+        self.q_next.save_weights(abs_path+'/Expert/data/backups/q_next.h5')
         
     def load_model(self):
         try:
-            self.q_eval.load_weights('data/q_eval.h5')
-            self.q_next.load_weights('data/q_next.h5')
+            self.q_eval.load_weights(abs_path+'/Expert/data/q_eval.h5')
+            self.q_next.load_weights(abs_path+'/Expert/data/q_next.h5')
             print ('Loaded Models!')
         except:
             print ('Could not load Models!')
