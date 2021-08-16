@@ -13,19 +13,29 @@ class Actor(keras.Model):
     def __init__(self, n_actions):
         super(Actor, self).__init__()
     
-        self.l1 = Dense(512, activation='relu')
-        self.l2 = Dense(128, activation='relu')
-        self.l3 = Dense(32, activation='relu')
-        self.l4 = Dense(8, activation='relu')
-        self.l5 = Dense(n_actions, activation='softmax')
+        self.l1 = Dense(2048, activation='elu')
+        self.l2 = Dense(1024, activation='elu')
+        self.l3 = Dense(512, activation='elu')
+        self.l4 = Dense(256, activation='elu')
+        self.l5 = Dense(64, activation='elu')
+        self.l6 = Dense(8, activation='elu')
+        self.l7 = Dense(n_actions, activation='softmax')
+        self.drop = Dropout(0.1)
     
     @tf.function     
     def call(self, x):
         x = self.l1(x)
+        x = self.drop(x)
         x = self.l2(x)
+        x = self.drop(x)
         x = self.l3(x)
+        x = self.drop(x)
         x = self.l4(x)
+        x = self.drop(x)
         x = self.l5(x)
+        x = self.drop(x)
+        x = self.l6(x)
+        x = self.l7(x)
         return x
 
 class Discriminator(keras.Model):
@@ -33,19 +43,29 @@ class Discriminator(keras.Model):
         super(Discriminator, self).__init__()
         
         self.l1 = Dense(256, activation='relu')
-        self.l2 = Dense(64, activation='relu')
-        self.l3 = Dense(16, activation='relu')
-        self.l4 = Dense(1, activation='sigmoid')
+        self.l2 = Dense(128, activation='relu')
+        self.l3 = Dense(64, activation='relu')
+        self.l4 = Dense(32, activation='relu')
+        self.l5 = Dense(16, activation='relu')
+        self.l6 = Dense(8, activation='relu')
+        self.l7 = Dense(1, activation='sigmoid')
         self.drop = Dropout(0.1)
     
     @tf.function  
     def call(self, state, action):
         x = tf.concat([state, action], axis=1)
         x = self.l1(x)
+        x = self.drop(x)
         x = self.l2(x)
+        x = self.drop(x)
         x = self.l3(x)
         x = self.drop(x)
         x = self.l4(x)
+        x = self.drop(x)
+        x = self.l5(x)
+        x = self.drop(x)
+        x = self.l6(x)
+        x = self.l7(x)
         return x
 
 class Buffer():
@@ -70,7 +90,7 @@ class Buffer():
         self.mem_cntr = len(state)
         
     def sample_buffer(self, batch_size):
-        max_mem = min(self.mem_cntr, self.mem_size)
+        max_mem = 2500
         batch = np.random.choice(max_mem, batch_size, replace=False)
 
         states = self.state_memory[batch]
@@ -102,9 +122,10 @@ class Agent:
         self.actor = Actor(n_actions)
         self.discriminator = Discriminator()
         self.actor.compile(optimizer= Adam(1e-4))
-        self.discriminator.compile(optimizer= Adam(2e-4))
+        self.discriminator.compile(optimizer= Adam(1e-5))
         
-        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.d_loss = []
+        self.a_loss = []
        
     def choose_action(self, observation):
         state = np.array([observation])
@@ -118,9 +139,6 @@ class Agent:
     
     def optimize(self, steps):
         
-        self.d_loss = []
-        self.a_loss = []
-            
         for i in range(steps):
             # Sample Expert datasets & Policy Dataset
             exp_states, exp_actions = self.expert_memory.sample_buffer(self.batch_size)
@@ -147,10 +165,9 @@ class Agent:
                 actor_gradients = actor_tape.gradient(actor_loss, self.actor.trainable_weights)
                 self.actor.optimizer.apply_gradients(zip(actor_gradients, self.actor.trainable_weights))
                 
-                self.d_loss.append(desc_loss)
-                self.a_loss.append(actor_loss)
-
-        print (f' Desc. Loss: {np.mean(self.d_loss):0.4f}, Actor Loss: {np.mean(self.a_loss):0.4f}')
+        print (f'\tDesc. Loss: {np.mean(self.d_loss):0.4f}, Actor Loss: {np.mean(self.a_loss):0.4f}')
+        self.d_loss.append(np.mean(desc_loss))
+        self.a_loss.append(np.mean(actor_loss))
         np.save(os.getcwd()+'/GAIL/data/d_loss', self.d_loss, allow_pickle=False)
         np.save(os.getcwd()+'/GAIL/data/a_loss', self.a_loss, allow_pickle=False)
  

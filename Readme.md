@@ -11,9 +11,9 @@ This repository implements 'GAIL' Implementation using TF2.
 |<img src="Expert/data/Expert Training.png" width="400">|<img src="Expert/data/Expert Performance.png" width="400">|
 
 ## GAIL Training & Evaluation
-|Training Log|Performance Test|
-|:---:|:---:|
-|<img src="GAIL/data/Training.png" width="400">|<img src="GAIL/data/Performance.png" width="400">|
+|Training Loss|Training Log|Performance Test|
+|:---:|:---:|:---:|
+|<img src="GAIL/data/Loss.png" width="400">|<img src="GAIL/data/Training.png" width="400">|<img src="GAIL/data/Performance.png" width="400">|
 
 ## Developer
 * Name: Kanishk Navale
@@ -21,6 +21,4 @@ This repository implements 'GAIL' Implementation using TF2.
 * E-Mail: navalekanishk@gmail.com
 
 ## TODO
-1. Replace 'DC-GAN' functions with loss functions in [paper](https://arxiv.org/abs/1606.03476).
-2. Improve the 'actor' & 'descriminator' networks.
-3. Currently, 'DC-GAN' loss function overcome 'nan' losses produced by paper.
+1. Improve the 'actor' & 'descriminator' networks.
