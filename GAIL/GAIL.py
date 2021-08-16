@@ -102,7 +102,7 @@ class Agent:
         self.actor = Actor(n_actions)
         self.discriminator = Discriminator()
         self.actor.compile(optimizer= Adam(1e-4))
-        self.discriminator.compile(optimizer= Adam(1e-4))
+        self.discriminator.compile(optimizer= Adam(2e-4))
         
         self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
        
@@ -128,22 +128,11 @@ class Agent:
 
             # Optimize the Descriminator and Actor
             with tf.GradientTape() as desc_tape, tf.GradientTape() as actor_tape: 
-                actions = self.choose_action(states)
-                actions = tf.reshape(actions,(actions.shape[1],actions.shape[2]))
+                actions = tf.squeeze(self.choose_action(states))
                 
                 expert_probs = self.discriminator(exp_states, exp_actions)
                 policy_probs = self.discriminator(states, actions)
                 
-                desc_loss = self.cross_entropy(tf.ones_like(expert_probs), expert_probs) + self.cross_entropy(tf.zeros_like(policy_probs), policy_probs)
-                actor_loss = self.cross_entropy(tf.ones_like(policy_probs), policy_probs)
-                
-                desc_gradients = desc_tape.gradient(desc_loss, self.discriminator.trainable_weights)
-                self.discriminator.optimizer.apply_gradients(zip(desc_gradients, self.discriminator.trainable_weights))
-                
-                actor_gradients = actor_tape.gradient(actor_loss, self.actor.trainable_weights)
-                self.actor.optimizer.apply_gradients(zip(actor_gradients, self.actor.trainable_weights))
-                
-                """
                 # Loss Functions implemented as per the GAIL research paper
                 # Optimize the Descriminator
                 desc_loss = tf.math.log(policy_probs) + tf.math.reduce_mean(tf.math.log(1.0 - expert_probs))   
@@ -151,17 +140,13 @@ class Agent:
                 self.discriminator.optimizer.apply_gradients(zip(desc_gradients, self.discriminator.trainable_weights))
                 
                 # Optimize the Actor
-                entropy = tf.concat([actions, exp_actions], axis=1)
-                entropy = 1.0 - tf.nn.sigmoid(entropy) * entropy + tf.nn.softplus(-entropy)
-                entropy = tf.reduce_mean(entropy)
-                
-                Q = tf.math.reduce_mean(tf.math.log(self.discriminator(states, actions)))
-                log_policy = tf.math.log(actions) 
-                actor_loss = (log_policy * Q) - (1e-2 * entropy)
+                log_policy = tf.math.log(actions)
+                entropy = tf.math.reduce_mean(-log_policy)
+                Q = tf.reduce_mean(tf.math.log(self.discriminator(states,actions)))
+                actor_loss = tf.math.reduce_mean(log_policy * Q) - (1e-3 * entropy)
                 actor_gradients = actor_tape.gradient(actor_loss, self.actor.trainable_weights)
                 self.actor.optimizer.apply_gradients(zip(actor_gradients, self.actor.trainable_weights))
-                """
-    
+                
                 self.d_loss.append(desc_loss)
                 self.a_loss.append(actor_loss)
 
