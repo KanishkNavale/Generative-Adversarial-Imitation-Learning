@@ -8,7 +8,7 @@ This repository implements 'GAIL' Implementation using TF2.
 
 |Training Log|Performance Test|
 |:---:|:---:|
-|<img src="Expert/data/Expert Training.png" width="400">|<img src="Expert/data/Expert Performance.png" width="400">|
+|<img src="Expert/data/Expert_Training.png" width="400">|<img src="Expert/data/Expert_Performance.png" width="400">|
 
 ## GAIL Training & Evaluation
 |Training Loss|Training Log|Performance Test|
