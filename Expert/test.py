@@ -1,37 +1,58 @@
-import gym
+from typing import Dict, List
 import os
-import numpy as np
-from DDPG import Agent
+import copy
+import json
 
-data_path = os.path.dirname(os.path.abspath(__file__)) + '/data/'
+import numpy as np
+import gym
+from tqdm import tqdm
+
+from DDQN import Agent
 
 if __name__ == '__main__':
 
-    env = gym.make('MountainCarContinuous-v0')
-    n_games = 100
+    # Init. Environment
+    env = gym.make('CartPole-v1')
+    env.reset()
 
-    # Load the trained Weights
-    agent = Agent(env, data_path, n_games, noise='normal')
-    agent.load_models()
+    # Init. Datapath
+    data_path = os.path.abspath('Expert/data')
 
-    # Test the Trained Agent
-    score_log = []
-    mean_log = []
+    # Init. Testing
+    n_games = 10
+    test_data: List[Dict[str, np.ndarray]] = [] * n_games
 
-    for i in range(n_games):
-        score = 0
-        done = False
-        observation = env.reset()
+    # Init. Agent
+    agent = Agent(env=env, n_games=n_games, training=False)
+    agent.load_models(data_path)
 
-        while not done:
-            action = agent.choose_action(observation)
-            observation, reward, done, info = env.step(action)
-            score += reward
+    for i in tqdm(range(n_games), desc=f'Testing', total=n_games):
+        score_history: List[np.float32] = [] * n_games
 
-        print(f'Expert Tryouts:{i}\tACC. Rewards: {score}')
-        score_log.append(score)
-        mean_log.append(np.mean(score_log[-5:]))
+        for _ in tqdm(range(n_games), desc=f'Testing', total=n_games):
+            score = 0
+            done = False
 
-    # Save the log
-    np.save(data_path + 'expert_sum', score_log, allow_pickle=False)
-    np.save(data_path + 'expert_mean', score_log, allow_pickle=False)
+            # Initial Reset of Environment
+            state = env.reset()
+
+            while not done:
+                action = agent.choose_action(state)
+                next_state, reward, done, _ = env.step(action)
+
+                agent.memory.add(state, action, reward, next_state, done)
+
+                state = copy.deepcopy(next_state)
+                score += reward
+
+            score_history.append(score)
+
+        print(f'Test Analysis:\n'
+              f'Mean:{np.mean(score_history)}\n'
+              f'Variance:{np.std(score_history)}')
+
+        test_data.append({'Test Score': score_history})
+
+    # Dump .json
+    with open(os.path.join(data_path, 'testing_info.json'), 'w', encoding='utf8') as file:
+        json.dump(test_data, file, indent=4, ensure_ascii=False)

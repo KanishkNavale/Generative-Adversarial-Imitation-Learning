@@ -1,62 +1,88 @@
-# Library Imports
-import gym
-import numpy as np
-from DDPG import Agent
+from typing import Dict, List
 import os
+import json
 
-data_path = os.path.dirname(os.path.abspath(__file__)) + '/data/'
+import numpy as np
+import gym
+
+from torch.utils.tensorboard import SummaryWriter
+
+from DDQN import Agent
+
+# Init. tensorboard summary writer
+tb = SummaryWriter(log_dir=os.path.abspath('Expert/data/tensorboard'))
+
 
 if __name__ == '__main__':
 
-    env = gym.make('MountainCarContinuous-v0')
+    # Init. Environment
+    env = gym.make('CartPole-v1')
+    env.reset()
 
-    n_games = 1000
-    score_history = []
-    mean_history = []
-    best_score = env.reward_range[0]
-    mean_score = 0
+    # Init. Datapath
+    data_path = os.path.abspath('Expert/data')
 
-    # Initiate Training
-    agent = Agent(env, data_path, n_games, noise='normal')
+    # Init. Training
+    n_games: int = 1500
+    best_score = -np.inf
+    score_history: List[float] = [] * n_games
+    avg_history: List[float] = [] * n_games
+    logging_info: List[Dict[str, float]] = [] * n_games
+
+    # Init. Agent
+    agent = Agent(env=env, n_games=n_games)
 
     for i in range(n_games):
-        score = 0
-        done = False
+        score: float = 0.0
+        done: bool = False
 
         # Initial Reset of Environment
-        observation = env.reset()
+        state = env.reset()
 
         while not done:
-            action = agent.choose_action(observation)
-            observation_, reward, done, info = env.step(action)
+            action = agent.choose_action(state)
 
-            # Store the experience
-            agent.store(observation, action, reward, observation_, done)
+            next_state, reward, done, _ = env.step(action)
+            agent.memory.add(state, action, reward, next_state, done)
 
-            observation = observation_
+            state = next_state
             score += reward
 
-        # Agent Optimize
-        agent.optimize()
+            agent.optimize()
 
         score_history.append(score)
-        mean_score = np.mean(score_history[-100:])
-        mean_history.append(mean_score)
+        avg_score: float = np.mean(score_history[-100:])
+        avg_history.append(avg_score)
 
-        if mean_score > best_score:
-            best_score = mean_score
-            agent.save_models()
-            print(
-                f'Episode:{i}'
-                f'\tACC. Rewards: {score:3.4f}'
-                f'\tAVG. Rewards: {mean_score:3.4f}'
-                f'\t *** MODEL SAVED! ***')
+        if avg_score > best_score:
+            best_score = avg_score
+            agent.save_models(data_path)
+            print(f'Episode:{i}'
+                  f'\t ACC. Rewards: {score:3.2f}'
+                  f'\t AVG. Rewards: {avg_score:3.2f}'
+                  f'\t *** MODEL SAVED! ***')
         else:
-            print(
-                f'Episode:{i}'
-                f'\tACC. Rewards: {score:3.4f}'
-                f'\tAVG. Rewards: {mean_score:3.4f}')
+            print(f'Episode:{i}'
+                  f'\t ACC. Rewards: {score:3.2f}'
+                  f'\t AVG. Rewards: {avg_score:3.2f}')
 
-        # Save the Training data
-        np.save(data_path + 'score_history', score_history, allow_pickle=False)
-        np.save(data_path + 'avg_history', mean_history, allow_pickle=False)
+        episode_info = {
+            'Episode': i,
+            'Total Episodes': n_games,
+            'Epidosic Summed Rewards': score,
+            'Moving Mean of Episodic Rewards': avg_score
+        }
+
+        logging_info.append(episode_info)
+
+        # Add info. to tensorboard
+        tb.add_scalars('training_rewards',
+                       {'Epidosic Summed Rewards': score,
+                        'Moving Mean of Episodic Rewards': avg_score}, i)
+
+        # Dump .json
+        with open(os.path.join(data_path, 'training_info.json'), 'w', encoding='utf8') as file:
+            json.dump(logging_info, file, indent=4, ensure_ascii=False)
+
+    # Close tensorboard writer
+    tb.close()
