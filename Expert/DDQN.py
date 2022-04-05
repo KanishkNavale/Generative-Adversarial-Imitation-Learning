@@ -36,6 +36,7 @@ class DuelingDeepQNetwork(torch.nn.Module):
         self.advantage = torch.nn.Linear(density, action_dimension)
 
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
+        self.device = device
         self.to(device)
 
     def forward(self, state) -> torch.Tensor:

@@ -13,9 +13,12 @@ import matplotlib.pyplot as plt
 from DDQN import Agent
 
 
-def predict_value(agent: Agent, state: np.ndarray) -> float:
-    state = torch.as_tensor(state, dtype=torch.float32)
-    value = agent.online_network(state).detach().numpy()
+def predict_value(agent: Agent, cart_pca: PCA, pole_pca: PCA, state: np.ndarray) -> float:
+    cart_states = cart_pca.inverse_transform(state[0])
+    pole_states = pole_pca.inverse_transform(state[1])
+    state = torch.as_tensor(np.hstack((cart_states, pole_states)),
+                            dtype=torch.float32, device=agent.online_network.device)
+    value = agent.online_network.forward(state).detach().cpu().numpy()
     return np.max(value)
 
 
@@ -30,7 +33,6 @@ if __name__ == "__main__":
 
     agent = Agent(env=env, training=False)
     agent.load_models(data_path)
-    agent.online_network.to(torch.device("cpu"))
 
     with open(os.path.join(data_path, 'training_info.json')) as f:
         train_data = json.load(f)
@@ -51,14 +53,20 @@ if __name__ == "__main__":
 
     # Compress the states to 2D
     state = np.vstack((cart_pos, cart_vel, pole_pos, pole_vel)).T
-    pca = PCA(n_components=2)
-    compressed_states = pca.fit_transform(state)
-    assert np.allclose(pca.explained_variance_ratio_[0], 1.0)
+
+    cart_pca = PCA(n_components=1)
+    pole_pca = PCA(n_components=1)
+
+    cart_states = cart_pca.fit_transform(state[:, :2])
+    pole_states = pole_pca.fit_transform(state[:, 2:4])
+
+    assert np.allclose(cart_pca.explained_variance_ratio_[0], 1.0)
+    assert np.allclose(pole_pca.explained_variance_ratio_[0], 1.0)
 
     # Prepare data to plot
-    x, y = compressed_states[:, 0], compressed_states[:, 1]
+    x, y = cart_states, pole_states
     x, y = np.meshgrid(x, y)
-    z = np.apply_along_axis(lambda _: predict_value(agent, _), 2, pca.inverse_transform(np.dstack([x, y])))
+    z = np.apply_along_axis(lambda _: predict_value(agent, cart_pca, pole_pca, _), 2, np.dstack([x, y]))
     z = z[:-1, :-1]
     z_min, z_max = z.min(), z.max()
 
@@ -80,9 +88,9 @@ if __name__ == "__main__":
 
     axes[2].pcolormesh(x, y, z, cmap='RdBu', vmin=z_min, vmax=z_max)
     axes[2].axis([x.min(), x.max(), y.min(), y.max()])
-    axes[2].set_xlabel('State: Principal Axes-1 (variance = 1.0)')
-    axes[2].set_ylabel('State: Principal Axes-2')
-    axes[2].set_title("Value Estimation")
+    axes[2].set_xlabel('Cart States: Principal Axes-1 (VAR=1.0)')
+    axes[2].set_ylabel('Pole States: Principal Axes-1 (VAR=1.0)')
+    axes[2].set_title("State Value Estimation")
     fig.colorbar(axes[2].pcolormesh(x, y, z, cmap='RdBu', vmin=z_min, vmax=z_max))
 
     fig.tight_layout()
